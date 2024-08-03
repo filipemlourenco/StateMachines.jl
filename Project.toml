@@ -1,0 +1,4 @@
+name = "StateMachines"
+uuid = "59420ebe-bdc3-4117-ac89-8393ca9fcf2c"
+authors = ["flourenco"]
+version = "0.1.0"
