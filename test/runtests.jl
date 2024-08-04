@@ -34,6 +34,12 @@ using Test
     @test length(b.transitions) == 2
     @test b.states == ["1", "2", "3"]
 
+    c = Automaton([
+        Transition(State("1"), State("2"))
+        Transition(State("2"), State("3"))
+    ], start = "2")
+    @test c.start == "2"
+
     @test_throws AssertionError Automaton([])
 
     @test_throws AssertionError Automaton(

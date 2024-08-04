@@ -23,7 +23,7 @@ mutable struct Automaton
 
     state     :: State
 
-    function Automaton(states::Vector, transitions::Vector, start::Union{Nothing, State} = nothing)
+    function Automaton(states::Vector, transitions::Vector, start::Union{State, Nothing} = nothing)
         @assert length(states) > 1 "Automaton should have at least two elements"
         @assert !isempty(transitions) "Automaton should have at least one transition"
 
@@ -36,12 +36,17 @@ mutable struct Automaton
         return new(states, transitions, start, start)
     end
 
-    function Automaton(transitions::Vector, start::Union{Nothing, State} = nothing)
+    function Automaton(transitions::Vector, start::Union{State, Nothing})
         states = unique([map(x -> x.from, transitions)..., map(x -> x.to, transitions)...])
         return Automaton(states, transitions, start)
     end
 
-    Automaton(transitions::Vector; states::Vector = [], start::Union{Nothing, State} = nothing) = Automaton(states, transitions, start)
+    function Automaton(transitions::Vector; states::Vector = [], start::Union{State, Nothing} = nothing)
+        if isempty(states)
+            return Automaton(transitions, start)
+        end
+        return Automaton(states, transitions, start)
+    end
 end
 
 # --- Getters
