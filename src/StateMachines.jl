@@ -30,6 +30,9 @@ mutable struct Automaton
         start = isnothing(start) ? states[1] : start
         @assert start in states "'$start' state not present in the states list"
 
+        ts = unique([map(x -> x.from, transitions)..., map(x -> x.to, transitions)...])
+        @assert all(x -> x in states, ts) "Invalid state in a transition (state list)"
+
         return new(states, transitions, start, start)
     end
 
@@ -37,6 +40,8 @@ mutable struct Automaton
         states = unique([map(x -> x.from, transitions)..., map(x -> x.to, transitions)...])
         return Automaton(states, transitions, start)
     end
+
+    Automaton(transitions::Vector; states::Vector = [], start::Union{Nothing, State} = nothing) = Automaton(states, transitions, start)
 end
 
 # --- Getters
