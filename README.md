@@ -75,10 +75,9 @@ or (states can be replaced by a string)
 
 or (instantiation with acceptable state list and initial state)
 ```julia
-    a1 = Automaton(
-        ["s1", "s2", "s3", "s4"],
-        [Transition("s1", "s2", :create), Transition("s1", "s4", :update)],
-         "s1"
+    a1 = Automaton([Transition("s1", "s2", :create), Transition("s1", "s4", :update)],
+        states = ["s1", "s2", "s3", "s4"],
+        start  = "s1"
     )
 ```
 
@@ -113,5 +112,5 @@ workflow = Automaton([
 
 record = (name = "my business record", state = "Draft", var1 = 1, var2 = 2)
 
-record.state = next(workflow, record.state, :prepare, context = record)
+new_state = StateMachines.exec(workflow, record.state, :prepare, context = record)
 ```
