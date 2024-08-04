@@ -101,23 +101,23 @@ end
         Transition(State("1"), State("4"), (a,c) -> a == :delete && c != "reviewed")
     ])
     a1.state = "1"
-    StateMachines.exec!(a1, :prepare, "invalid")
+    StateMachines.exec!(a1, :prepare, context = "invalid")
     @test a1.state == "1"
 
     a1.state = "1"
-    StateMachines.exec!(a1, :prepare, "valid")
+    StateMachines.exec!(a1, :prepare, context = "valid")
     @test a1.state == "2"
 
     a1.state = "2"
-    StateMachines.exec!(a1, :review, "prepared")
+    StateMachines.exec!(a1, :review, context = "prepared")
     @test a1.state == "3"
 
     a1.state = "1"
-    StateMachines.exec!(a1, :delete, "prepared")
+    StateMachines.exec!(a1, :delete, context = "prepared")
     @test a1.state == "4"
 
     a1.state = "1"
-    StateMachines.exec!(a1, :delete, "reviewed")
+    StateMachines.exec!(a1, :delete, context = "reviewed")
     @test a1.state == "1"
 
 end
