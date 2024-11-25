@@ -16,8 +16,7 @@ Implementation follows the definition of a deterministic finite automaton M that
 ## Setup
 
 ```julia
-using Pkg
-Pkg.add("https://github.com/filipemlourenco/StateMachines.jl")
+using Pkg; Pkg.add("StateMachines");
 using StateMachines
 ```
 
