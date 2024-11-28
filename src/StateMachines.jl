@@ -4,8 +4,6 @@ export State
 export Transition
 export Automaton
 
-MULTISTEP = true
-
 # --- Models
 const State = String
 
@@ -21,7 +19,8 @@ mutable struct Automaton
     transitions :: Vector{Transition}
     start       :: Union{Nothing, State}
 
-    state     :: State
+    state       :: State
+    multistep   :: Bool
 
     function Automaton(states::Vector, transitions::Vector, start::Union{State, Nothing} = nothing)
         @assert length(states) > 1 "Automaton should have at least two elements"
@@ -33,7 +32,7 @@ mutable struct Automaton
         ts = unique([map(x -> x.from, transitions)..., map(x -> x.to, transitions)...])
         @assert all(x -> x in states, ts) "Invalid state in a transition (state list)"
 
-        return new(states, transitions, start, start)
+        return new(states, transitions, start, start, true)
     end
 
     function Automaton(transitions::Vector, start::Union{State, Nothing})
@@ -58,8 +57,8 @@ transitions(w::Automaton) :: Vector = [(k => n.to) for (k,v) in w.transitions, n
 transitions(w::Automaton, s::State) :: Vector = [t.to for t in w[s].transitions]
 
 # --- Setters
-multistep!()    = (global MULTISTEP = true)
-singlestep!()   = (global MULTISTEP = false)
+multistep!(w::Automaton)    = (w.multistep = true)
+singlestep!(w::Automaton)   = (w.multistep = false)
 
 # --- Automaton (state machine) execution
 function exec!(w::Automaton, action::Union{Symbol, Nothing} = nothing; context::Any = nothing)
@@ -73,7 +72,7 @@ function exec(w::Automaton, s::State, action::Union{Symbol, Nothing} = nothing; 
 
     prev = s
     n = _exec(w, prev, action, context = context)
-    if MULTISTEP
+    if w.multistep
         while(prev != n)
             prev = n
             n = _exec(w, prev, nothing, context = context)
