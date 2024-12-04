@@ -65,14 +65,15 @@ function exec!(w::Automaton, action::Union{Symbol, Nothing} = nothing; context::
     w.state = exec(w, w.state, action, context = context)
 end
 
-exec(w::Automaton; context::Any = nothing)                  = exec(w, w.state, nothing, context = context)
-exec(w::Automaton, action::Symbol; context::Any = nothing)  = exec(w, w.state, action,  context = context)
-function exec(w::Automaton, s::State, action::Union{Symbol, Nothing} = nothing; context::Any = nothing) :: State
+exec(w::Automaton; context::Any = nothing, multistep = nothing)                  = exec(w, w.state, nothing, context = context, multistep = multistep)
+exec(w::Automaton, action::Symbol; context::Any = nothing, multistep = nothing)  = exec(w, w.state, action,  context = context, multistep = multistep)
+function exec(w::Automaton, s::State, action::Union{Symbol, Nothing} = nothing; context::Any = nothing, multistep = nothing) :: State
     @assert s in w.states "State not available in the automaton ($s)"
 
+    _multistep = isnothing(multistep) ? w.multistep : multistep
     prev = s
     n = _exec(w, prev, action, context = context)
-    if w.multistep
+    if _multistep
         while(prev != n)
             prev = n
             n = _exec(w, prev, nothing, context = context)
