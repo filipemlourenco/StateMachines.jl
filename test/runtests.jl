@@ -138,3 +138,30 @@ end
     @test a1.state == "1"
 
 end
+
+@testset "State Machine Multi-step" begin
+
+    a = Automaton([
+        Transition(State("1"), State("2"))
+        Transition(State("2"), State("3"))
+        Transition(State("3"), State("4"), :update)
+    ])
+
+    a.state = "1"
+    StateMachines.singlestep!(a)
+    @test StateMachines.exec!(a) == "2"
+    @test StateMachines.exec!(a) == "3"
+
+    a.state = "1"
+    StateMachines.multistep!(a)
+    @test StateMachines.exec!(a) == "3"
+
+    a.state = "1"
+    StateMachines.multistep!(a)
+    @test StateMachines.exec!(a, multistep = false) == "2"
+
+    a.state = "1"
+    StateMachines.singlestep!(a)
+    @test StateMachines.exec!(a, multistep = true) == "3"
+
+end

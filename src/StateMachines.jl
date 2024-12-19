@@ -61,8 +61,8 @@ multistep!(w::Automaton)    = (w.multistep = true)
 singlestep!(w::Automaton)   = (w.multistep = false)
 
 # --- Automaton (state machine) execution
-function exec!(w::Automaton, action::Union{Symbol, Nothing} = nothing; context::Any = nothing)
-    w.state = exec(w, w.state, action, context = context)
+function exec!(w::Automaton, action::Union{Symbol, Nothing} = nothing; context::Any = nothing, multistep = nothing)
+    w.state = exec(w, w.state, action, context = context, multistep = multistep)
 end
 
 exec(w::Automaton; context::Any = nothing, multistep = nothing)                  = exec(w, w.state, nothing, context = context, multistep = multistep)
