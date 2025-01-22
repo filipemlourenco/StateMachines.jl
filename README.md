@@ -40,12 +40,12 @@ a = Automaton(states::Vector{State}, ts::Vector{Transition}, start::State)
 
 Automaton execution:
 ```julia
-exec!(a::Automaton; context::Any = nothing)
-exec!(a::Automaton, action::Symbol; context::Any = nothing)
+exec!(a::Automaton; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
+exec!(a::Automaton, action::Symbol; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
 
-a1 = exec(a::Automaton; context::Any = nothing)
-a1 = exec(a::Automaton, action::Symbol; context::Any = nothing)
-a1 = exec(a::Automaton, s::State, action::Union{Symbol, Nothing}; context::Any = nothing)
+a1 = exec(a::Automaton; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
+a1 = exec(a::Automaton, action::Symbol; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
+a1 = exec(a::Automaton, s::State, action::Union{Symbol, Nothing}; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
 ```
 
 
@@ -111,5 +111,5 @@ workflow = Automaton([
 
 record = (name = "my business record", state = "Draft", var1 = 1, var2 = 2)
 
-new_state = StateMachines.exec(workflow, record.state, :prepare, context = record)
+new_state = StateMachines.exec(workflow, record.state, :prepare, context = record, multistep = true)
 ```
