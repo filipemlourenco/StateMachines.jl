@@ -61,13 +61,13 @@ multistep!(w::Automaton)    = (w.multistep = true)
 singlestep!(w::Automaton)   = (w.multistep = false)
 
 # --- Automaton (state machine) execution
-function exec!(w::Automaton, action::Union{Symbol, Nothing} = nothing; context::Any = nothing, multistep = nothing)
+function exec!(w::Automaton, action::Union{Symbol, Nothing} = nothing; context::Any = nothing, multistep::Union{Bool, Nothing} = nothing)
     w.state = exec(w, w.state, action, context = context, multistep = multistep)
 end
 
-exec(w::Automaton; context::Any = nothing, multistep = nothing)                  = exec(w, w.state, nothing, context = context, multistep = multistep)
-exec(w::Automaton, action::Symbol; context::Any = nothing, multistep = nothing)  = exec(w, w.state, action,  context = context, multistep = multistep)
-function exec(w::Automaton, s::State, action::Union{Symbol, Nothing} = nothing; context::Any = nothing, multistep = nothing) :: State
+exec(w::Automaton; context::Any = nothing, multistep::Union{Bool, Nothing} = nothing)                  = exec(w, w.state, nothing, context = context, multistep = multistep)
+exec(w::Automaton, action::Symbol; context::Any = nothing, multistep::Union{Bool, Nothing} = nothing)  = exec(w, w.state, action,  context = context, multistep = multistep)
+function exec(w::Automaton, s::State, action::Union{Symbol, Nothing} = nothing; context::Any = nothing, multistep::Union{Bool, Nothing} = nothing) :: State
     @assert s in w.states "State not available in the automaton ($s)"
 
     _multistep = isnothing(multistep) ? w.multistep : multistep
