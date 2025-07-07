@@ -11,8 +11,10 @@ struct Transition
     from        :: State
     to          :: State
     input       :: Union{Nothing, Symbol, Function}
+    execute     :: Union{Nothing, Function}
 end
-Transition(from::State, to::State) = Transition(from, to, nothing)
+Transition(from::State, to::State) = Transition(from, to, nothing, nothing)
+Transition(from::State, to::State, input) = Transition(from, to, input, nothing)
 
 mutable struct Automaton
     states      :: Vector{State}
@@ -89,6 +91,11 @@ function _exec(w::Automaton, s::State, action::Union{Symbol, Nothing}; context::
         if isnothing(t.input) ||
             (t.input isa Symbol && t.input == action) ||
             (t.input isa Function && t.input(action, context))
+                # --- Execute on transition
+                if !isnothing(t.execute)
+                    t.execute(context)
+                end
+                # --- return new state
                 return t.to
         end
     end
