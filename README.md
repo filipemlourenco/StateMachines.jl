@@ -3,113 +3,166 @@
 [action-img]: https://github.com/filipemlourenco/StateMachines.jl/workflows/CI/badge.svg
 [action-url]: https://github.com/filipemlourenco/StateMachines.jl/actions
 
-StateMachines package is functional implementation of a [deterministic finite-state machine (DFSM)](https://en.wikipedia.org/wiki/Finite-state_machine) - also known as a [deterministic finite automaton (DFA)](https://en.wikipedia.org/wiki/Deterministic_finite_automaton). It can be used as a simple transition **state system**, as a business **workflow** or as a autonomous **state machine**.
+StateMachines is a Julia implementation of a [deterministic finite-state machine (DFSM)](https://en.wikipedia.org/wiki/Finite-state_machine). It can be used as a simple transition **state system**, as a business **workflow**, or as an autonomous **state machine**.
 
-Implementation follows the definition of a deterministic finite automaton M that is a 5-tuple, (Q, Σ, δ, q0, F), consisting of:
-- a finite set of **states** (Q)
-- a finite set of inputs - **actions and context** (Σ)
-- a finite set of **transitions** or transition function (d: Q x Σ -> δ)
-- an **initial** or start state (q[0])
-- a set of **accept** or final states (F)
+The implementation follows the DFA 5-tuple definition (Q, Σ, δ, q0, F):
+- **Q** — finite set of states
+- **Σ** — finite set of inputs (actions and context)
+- **δ** — transition function (Q × Σ → Q)
+- **q0** — initial state
+- **F** — set of final (accept) states
 
 
 ## Setup
 
 ```julia
-using Pkg; Pkg.add("StateMachines");
+using Pkg; Pkg.add("StateMachines")
 using StateMachines
 ```
 
-## Usage
 
-1. Create an automaton (`Automaton`)
-2. Execute the automaton (`exec` or `exec!`)
+## API Reference
 
-
-### Syntax
-Automaton instatiation:
-```julia
-t = Transition(from::State, to::State)
-t = Transition(from::State, to::State, input::Symbol)
-t = Transition(from::State, to::State, input::Function)
-
-a = Automaton(ts::Vector{Transition})
-a = Automaton(states::Vector{State}, ts::Vector{Transition})
-a = Automaton(states::Vector{State}, ts::Vector{Transition}, start::State)
-```
-
-Automaton execution:
-```julia
-exec!(a::Automaton; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
-exec!(a::Automaton, action::Symbol; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
-
-a1 = exec(a::Automaton; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
-a1 = exec(a::Automaton, action::Symbol; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
-a1 = exec(a::Automaton, s::State, action::Union{Symbol, Nothing}; context::Any = nothing; multistep::Union{Bool, Nothing} = nothing)
-```
-
-
-### 1. Simple example
-
-Create an automaton with only the transitions states. Initial state will be the state from the first transition and no final stage will be set. Accepted states and inputs (actions) will be infeered from the transitions.
-
-#### Automaton Instantiation
-```julia
-    a1 = Automaton([
-        Transition(State("s1"), State("s2"), :create),
-        Transition(State("s2"), State("s3")),
-        Transition(State("s1"), State("s4"), :update),
-    ])
-```
-
-or (states can be replaced by a string)
+### Transition
 
 ```julia
-    a1 = Automaton([
-        Transition("s1", "s2", :create),
-        Transition("s2", "s3"),
-        Transition("s1", "s4", :update),
-    ])
+Transition(from, to)                        # unconditional transition
+Transition(from, to, input::Symbol)         # fires on exact action match
+Transition(from, to, input::Function)       # fires when input(action, context) == true
+Transition(from, to, input, execute::Function)  # also calls execute(context) when fired
 ```
 
-or (instantiation with acceptable state list and initial state)
+`from` and `to` are `State` (alias for `String`). When a transition fires, `execute` is called with the current `context` before the state changes — use it for side effects tied to a specific transition.
+
+### Automaton
+
 ```julia
-    a1 = Automaton([Transition("s1", "s2", :create), Transition("s1", "s4", :update)],
-        states = ["s1", "s2", "s3", "s4"],
-        start  = "s1"
-    )
+Automaton(transitions)
+Automaton(transitions; start = "s0", states = [...], final = [...])
+Automaton(transitions, start; final = [...])
+Automaton(states, transitions, start; final = [...])
 ```
 
-#### Automaton Execution
+States are inferred from transitions when not provided explicitly. `start` defaults to the state of the first transition. `multistep` is enabled by default (see below).
 
-Simple automaton execution:
+### Execution
+
 ```julia
-next_state = StateMachines.exec(a1, :create)
+# Non-mutating — returns next state, does not change a.state
+exec(a)                                            # advance from current state, no action
+exec(a, action::Symbol; context, multistep)        # advance from current state with action
+exec(a, s::State, action; context, multistep)      # advance from explicit state
+
+# Mutating — advances and updates a.state, returns new state
+exec!(a; context, multistep)
+exec!(a, action::Symbol; context, multistep)
 ```
 
-Automaton execution as a transition system (e.g. workflow):
+### Step mode
+
+By default, after a transition fires `exec` keeps following unconditional transitions until the state stabilises (**multistep**). This lets you chain intermediate states transparently. Use `singlestep` to advance one transition at a time.
+
 ```julia
-current_state = State("s1")
-next_state = StateMachines.exec(a1, current_state, :create)
+multistep!(a)              # enable (default)
+singlestep!(a)             # disable
+
+# or override per call:
+exec(a, :action, multistep = false)
+exec!(a, :action, multistep = true)
 ```
 
-Automaton execution as a self (or autonomous) state machine:
+Multistep detects cycles (a state visited twice raises an error).
+
+### Final states and getters
+
 ```julia
-StateMachines.exec!(a1, :update)
+isfinal(a)             # true if current state is in final set
+isfinal(a, s)          # true if s is in final set
+
+StateMachines.states(a)           # all states
+StateMachines.start(a)            # initial state
+StateMachines.state(a)            # current state (also: current(a))
+StateMachines.transitions(a)      # all transitions
+StateMachines.transitions(a, s)   # transitions from state s
 ```
 
-### 2. Business workflow example
+
+## Examples
+
+### 1. Simple automaton
+
+States and the initial state are inferred from the transition list.
+
+```julia
+a = Automaton([
+    Transition("draft",    "prepared", :prepare),
+    Transition("prepared", "reviewed", :review),
+    Transition("prepared", "draft",    :reject),
+])
+
+# Pure query — reads a.state, does not mutate
+StateMachines.exec(a, :prepare)   # => "prepared"
+
+# Transition system — caller supplies the current state
+StateMachines.exec(a, "draft", :prepare)   # => "prepared"
+
+# Autonomous — advances and mutates a.state
+StateMachines.exec!(a, :prepare)
+a.state   # => "prepared"
+```
+
+### 2. Context-aware transitions
+
+Pass arbitrary data as `context`; the guard function receives `(action, context)`.
 
 ```julia
 workflow = Automaton([
-    Transition("Draft",    "Prepared",  :prepare),
-    Transition("Prepared", "Reviewed",  (action, context) -> action == :review && context.var1 == 0),
-    Transition("Prepared", "Draft",     :update),
-    Transition("Reviewed", "Archived",  :archive),
-    Transition("Reviewed", "Draft",     :update),
+    Transition("Draft",    "Prepared", :prepare),
+    Transition("Prepared", "Reviewed", (action, ctx) -> action == :review && ctx.approved),
+    Transition("Prepared", "Draft",    :reject),
+    Transition("Reviewed", "Archived", :archive),
+], final = ["Archived"])
+
+record = (approved = true,)
+StateMachines.exec(workflow, "Prepared", :review, context = record)   # => "Reviewed"
+
+record2 = (approved = false,)
+StateMachines.exec(workflow, "Prepared", :review, context = record2)  # => "Prepared" (no match)
+```
+
+### 3. Side effects with `execute`
+
+The `execute` callback on a `Transition` fires with `context` when that transition is taken.
+
+```julia
+log = String[]
+
+pipeline = Automaton([
+    Transition("idle",     "running",  :start,    ctx -> push!(log, "started at $(ctx)")),
+    Transition("running",  "done",     :finish,   ctx -> push!(log, "finished at $(ctx)")),
+    Transition("running",  "failed",   :error,    ctx -> push!(log, "failed: $(ctx)")),
 ])
 
-record = (name = "my business record", state = "Draft", var1 = 1, var2 = 2)
+StateMachines.exec!(pipeline, :start,  context = "10:00")
+StateMachines.exec!(pipeline, :finish, context = "10:05")
 
-new_state = StateMachines.exec(workflow, record.state, :prepare, context = record, multistep = true)
+log   # => ["started at 10:00", "finished at 10:05"]
+```
+
+### 4. Multistep chaining
+
+Unconditional transitions chain automatically in multistep mode. After the triggered transition fires, the automaton keeps following unconditional transitions until the state stabilises.
+
+```julia
+checkout = Automaton([
+    Transition("new",        "processing", :submit),   # requires :submit action
+    Transition("processing", "validated"),             # unconditional — chains automatically
+    Transition("validated",  "complete"),              # unconditional — chains automatically
+], final = ["complete"])
+
+# :submit fires the first transition; the automaton then advances through
+# "processing" and "validated" automatically and settles at "complete"
+StateMachines.exec(checkout, "new", :submit)   # => "complete"
+
+StateMachines.isfinal(checkout, "complete")    # => true
 ```
