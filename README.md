@@ -86,6 +86,10 @@ StateMachines.transitions(a)      # all transitions
 StateMachines.transitions(a, s)   # transitions from state s
 ```
 
+## Roadmap
+
+- Hierarchical state machines (HSMs) — nested states with inherited transitions and entry/exit actions
+
 
 ## Examples
 
